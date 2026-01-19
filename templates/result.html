@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Resume Analysis Result</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md">
+
+  <h1 class="text-2xl font-bold mb-4">Resume Analysis Report</h1>
+
+  <!-- ATS Score -->
+  <div class="mb-6">
+    <h2 class="font-semibold text-lg">ATS Score</h2>
+    <p class="text-4xl font-bold text-blue-600">
+      {{ analysis.ats_score }}/100
+    </p>
+  </div>
+
+  <!-- Grammar Fixes -->
+  <div class="mb-6">
+    <h2 class="font-semibold text-lg mb-2">Grammar & Clarity Improvements</h2>
+    <ul class="list-disc ml-6">
+      {% for item in analysis.grammar_fixes %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Formatting -->
+  <div class="mb-6">
+    <h2 class="font-semibold text-lg mb-2">Formatting Suggestions</h2>
+    <ul class="list-disc ml-6">
+      {% for item in analysis.formatting_suggestions %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Missing Skills -->
+  <div class="mb-6">
+    <h2 class="font-semibold text-lg mb-2">Missing / Weak Skills</h2>
+    <ul class="list-disc ml-6 text-red-600">
+      {% for item in analysis.missing_skills %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Improved Bullets -->
+  <div class="mb-6">
+    <h2 class="font-semibold text-lg mb-2">Improved Resume Bullet Examples</h2>
+    <ul class="list-disc ml-6">
+      {% for item in analysis.improved_bullets %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Final Tips -->
+  <div>
+    <h2 class="font-semibold text-lg mb-2">Final Recommendations</h2>
+    <ul class="list-disc ml-6">
+      {% for item in analysis.final_tips %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+</div>
+
+</body>
+</html>
