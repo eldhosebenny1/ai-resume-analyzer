@@ -88,6 +88,26 @@ IF CONTENT IS LIMITED:
 - NEVER return fewer than the minimum counts
 
 Be strict, practical, and premium-quality.
+
+ABSOLUTE REQUIREMENTS (NO EXCEPTIONS):
+
+- formatting_and_structure_tips MUST contain at least 5 items.
+  If formatting is already good:
+  - Suggest micro-improvements
+  - Suggest reordering sections
+  - Suggest consistency improvements
+  - Suggest ATS optimization tweaks
+
+- missing_skills MUST contain at least 5 items.
+  If few skills are missing:
+  - Include weakly implied skills
+  - Include commonly expected adjacent skills
+  - Include role-aligned tooling or concepts
+  - NEVER return an empty array
+
+- DO NOT return empty arrays for ANY section.
+- If uncertain, provide safe, conservative suggestions.
+- ALWAYS meet the MINIMUM item counts specified above.
 """
 
     response = client.models.generate_content(

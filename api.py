@@ -27,6 +27,7 @@ async def analyze(
     analysis = extract_json(raw_response)
     analysis["ats_score"] = calculate_ats_score(analysis)
     analysis = adapt_for_ui(analysis)
+    analysis = ensure_min_items(analysis)
     return templates.TemplateResponse(
         "result.html",
         {"request": request, "analysis": analysis}
@@ -43,4 +44,25 @@ def adapt_for_ui(raw: dict) -> dict:
         ],
         "final_tips": raw.get("premium_standout_tips", [])
     }
+def ensure_min_items(data: dict):
+    if not data.get("formatting_suggestions"):
+        data["formatting_suggestions"] = [
+            "Ensure consistent bullet point formatting across all sections",
+            "Use standard section headings such as Skills, Experience, Projects",
+            "Place Skills section immediately after Summary for ATS parsing",
+            "Limit resume length to 1–2 pages with consistent spacing",
+            "Avoid excessive capitalization or symbols in headings"
+        ]
+
+    if not data.get("missing_skills"):
+        data["missing_skills"] = [
+            "REST API fundamentals",
+            "Basic cloud deployment concepts",
+            "Data structures and algorithms",
+            "Version control best practices",
+            "Problem-solving in production environments"
+        ]
+
+    return data
+
 
