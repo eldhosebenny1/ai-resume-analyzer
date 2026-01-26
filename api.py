@@ -17,6 +17,8 @@ from models import Analysis
 
 
 
+
+
 def make_hash(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
@@ -107,6 +109,7 @@ async def analyze(
 from fastapi import Form
 
 @app.post("/unlock")
+@app.post("/unlock/")
 def unlock(
     request: Request,
     analysis_id: str = Form(...),
@@ -191,4 +194,14 @@ def ensure_min_items(data: dict):
         ]
 
     return data
+# -------------------------------
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # -------------------------------
