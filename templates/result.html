@@ -1,72 +1,234 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Resume Analysis Result</title>
+  <title>Resume Analysis Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
 
-<div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md">
+<body class="bg-gray-100 min-h-screen py-8 px-4">
 
-  <h1 class="text-2xl font-bold mb-4">Resume Analysis Report</h1>
+<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
 
-  <!-- ATS Score -->
-  <div class="mb-6">
-    <h2 class="font-semibold text-lg">ATS Score</h2>
-    <p class="text-4xl font-bold text-blue-600">
-      {{ analysis.ats_score }}/100
+  <!-- HEADER -->
+  <h1 class="text-2xl font-bold text-gray-800 mb-10 text-center">
+    Resume Analysis Report
+  </h1>
+
+  <!-- ATS SCORE -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      ATS Score
+    </h2>
+    <p class="text-5xl font-bold text-blue-600">
+      {{ analysis.ats_score }}
+      <span class="text-lg text-gray-500">/100</span>
     </p>
-  </div>
+  </section>
 
-  <!-- Grammar Fixes -->
-  <div class="mb-6">
-    <h2 class="font-semibold text-lg mb-2">Grammar & Clarity Improvements</h2>
-    <ul class="list-disc ml-6">
+  <!-- OVERALL ASSESSMENT -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Overall Assessment
+    </h2>
+
+    {% if analysis.overall_assessment %}
+      <p class="font-medium text-gray-800">
+        {{ analysis.overall_assessment.match_tier }}
+      </p>
+      <p class="text-gray-600 mt-1">
+        {{ analysis.overall_assessment.one_line_summary }}
+      </p>
+    {% else %}
+      <p class="italic text-gray-400">
+        🔒 Unlock full report to view assessment.
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- GRAMMAR -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Grammar & Clarity Improvements
+    </h2>
+
+    <ul class="list-disc ml-6 space-y-1 text-gray-700">
       {% for item in analysis.grammar_fixes %}
         <li>{{ item }}</li>
       {% endfor %}
     </ul>
-  </div>
+  </section>
 
-  <!-- Formatting -->
-  <div class="mb-6">
-    <h2 class="font-semibold text-lg mb-2">Formatting Suggestions</h2>
-    <ul class="list-disc ml-6">
-      {% for item in analysis.formatting_suggestions %}
-        <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
+  <!-- MISSING SKILLS -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Missing / Weak Skills
+    </h2>
 
-  <!-- Missing Skills -->
-  <div class="mb-6">
-    <h2 class="font-semibold text-lg mb-2">Missing / Weak Skills</h2>
-    <ul class="list-disc ml-6 text-red-600">
+    <ul class="list-disc ml-6 space-y-1 text-red-600">
       {% for item in analysis.missing_skills %}
         <li>{{ item }}</li>
       {% endfor %}
     </ul>
+  </section>
+
+  <!-- IMPROVED BULLETS -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Improved Resume Bullet Examples
+    </h2>
+
+    {% if analysis.improved_bullets %}
+      <ul class="list-disc ml-6 space-y-2 text-gray-700">
+        {% for item in analysis.improved_bullets %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="italic text-gray-400">
+        🔒 Unlock full report to view optimized bullet rewrites.
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- CRITICAL ISSUES -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Critical Issues Recruiters Reject For
+    </h2>
+
+    {% if analysis.critical_issues %}
+      <ul class="list-disc ml-6 space-y-1 text-gray-700">
+        {% for issue in analysis.critical_issues %}
+          <li>
+            <span class="font-semibold">{{ issue.severity }}:</span>
+            {{ issue.issue }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="italic text-gray-400">
+        🔒 Unlock full report to see critical recruiter red flags.
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- FORMATTING -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Formatting & Structure Fixes
+    </h2>
+
+    {% if analysis.formatting_suggestions %}
+      <ul class="list-disc ml-6 space-y-1 text-gray-700">
+        {% for item in analysis.formatting_suggestions %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="italic text-gray-400">
+        🔒 Unlock full report to view ATS formatting improvements.
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- RECRUITER QUICK SCAN -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Recruiter Quick Scan (7-second view)
+    </h2>
+
+    {% if analysis.recruiter_quick_scan %}
+      <p class="text-gray-700">
+        {{ analysis.recruiter_quick_scan }}
+      </p>
+    {% else %}
+      <p class="italic text-gray-400">
+        🔒 Unlock full report to see recruiter’s first impression.
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- PREMIUM TIPS -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">
+      Premium Standout Tips (2025–26)
+    </h2>
+
+    {% if analysis.premium_tips %}
+      <ul class="list-disc ml-6 space-y-1 text-gray-700">
+        {% for item in analysis.premium_tips %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="italic text-gray-400">
+        🔒 Unlock full report for premium career-boosting tips.
+      </p>
+    {% endif %}
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section class="mb-10">
+    <h2 class="text-lg font-semibold text-gray-400">
+      Downloadable Full Report (Coming Soon)
+    </h2>
+  </section>
+
+  <!-- PAYMENT SECTION -->
+{% if not is_paid %}
+<section class="mt-12 p-6 border-t bg-gray-50 rounded-lg text-center">
+
+  <h3 class="text-xl font-bold text-gray-800 mb-2">
+    🔓 Unlock Full Resume Report
+  </h3>
+
+  <p class="text-gray-600 mb-4">
+    Pay ₹299 via Google Pay and enter your UPI Transaction ID below to unlock.
+  </p>
+
+  <!-- GOOGLE PAY BUTTON -->
+  <a href="upi://pay?pa=bennyeldho2@okicici&pn=AI Resume Analyzer&am=299&cu=INR&tn=Full Resume Report">
+    <button class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
+      Pay ₹299 via Google Pay (Mobile)
+    </button>
+  </a>
+
+  <p class="text-sm text-gray-500 mt-2">
+    📱 Mobile opens Google Pay · 💻 Desktop scan QR below
+  </p>
+
+  <div class="mt-4">
+    <img src="/templates/qrcode.png" alt="Google Pay QR Code"
+         class="mx-auto w-48 border rounded-lg shadow">
   </div>
 
-  <!-- Improved Bullets -->
-  <div class="mb-6">
-    <h2 class="font-semibold text-lg mb-2">Improved Resume Bullet Examples</h2>
-    <ul class="list-disc ml-6">
-      {% for item in analysis.improved_bullets %}
-        <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
+  <!-- TRANSACTION ID FORM -->
+  <form method="post" action="/unlock" class="mt-6">
+    <input type="hidden" name="analysis_id" value="{{ analysis_id }}">
 
-  <!-- Final Tips -->
-  <div>
-    <h2 class="font-semibold text-lg mb-2">Final Recommendations</h2>
-    <ul class="list-disc ml-6">
-      {% for item in analysis.final_tips %}
-        <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
+    <input
+      type="text"
+      name="transaction_id"
+      placeholder="Enter UPI Transaction ID"
+      required
+      class="border rounded px-4 py-2 w-full max-w-sm mx-auto block mb-3"
+    >
+
+    <button
+      type="submit"
+      class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
+    >
+      I’ve Paid – Unlock Full Report
+    </button>
+  </form>
+
+  <p class="text-xs text-gray-500 mt-3">
+    Transaction ID is used only for payment confirmation.
+  </p>
+
+</section>
+{% endif %}
+
 
 </div>
 
