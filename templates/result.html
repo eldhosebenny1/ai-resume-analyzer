@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <title>Resume Analysis Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle {
+      background: conic-gradient(#0284c7 var(--score-percent), #e2e8f0 0);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans selection:bg-brand-100 selection:text-brand-900">
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-50 glass-card border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <div class="flex items-center gap-2">
+          <i data-lucide="file-check" class="w-6 h-6 text-brand-600"></i>
+          <span class="font-bold text-xl tracking-tight">ResumeAI</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">Analyze
+            Another</a>
+
+          {% if user %}
+          <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+            <img src="{{ user.picture or 'https://api.dicebear.com/7.x/initials/svg?seed=' + user.name }}"
+              alt="{{ user.name }}" referrerpolicy="no-referrer" class="w-8 h-8 rounded-full border border-slate-300">
+            <div class="flex flex-col">
+              <span class="text-sm font-bold text-slate-700 leading-none">{{ user.name }}</span>
+              <a href="/logout" class="text-xs text-red-500 hover:text-red-700 font-medium mt-1">Sign Out</a>
+            </div>
+          </div>
+          {% else %}
+          <a href="/login" class="text-sm font-bold text-brand-600 hover:text-brand-700">Login to Save</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Header Section -->
+    <div class="text-center mb-12">
+      <span
+        class="inline-block py-1 px-3 rounded-full bg-brand-50 text-brand-600 text-sm font-medium mb-3 border border-brand-100">
+        Analysis Complete
+      </span>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+        Your Resume <span class="gradient-text">Report</span>
+      </h1>
+      <p class="text-slate-500 max-w-2xl mx-auto text-lg">
+        Here's a detailed breakdown of how your resume performs against the job description.
+      </p>
+    </div>
+
+    <!-- Top Row: Highlights -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+      <!-- ATS Score Card -->
+      <div
+        class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-blue-600"></div>
+
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-brand-50 rounded-lg text-brand-600">
+            <i data-lucide="award" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">ATS Score</h2>
+        </div>
+
+        <div class="relative w-40 h-40 mx-auto mb-6 flex items-center justify-center flex-shrink-0">
+          <div
+            class="w-full h-full rounded-full score-circle transform -rotate-90 transition-all duration-1000 ease-out"
+            style="--score-percent: {{ analysis.ats_score | default(0) }}%;">
+          </div>
+          <div class="absolute w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-sm">
+            <span class="text-4xl font-bold text-slate-900">{{ analysis.ats_score | default(0) }}</span>
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">/ 100</span>
+          </div>
+        </div>
+
+        <div class="flex justify-center gap-2 mb-2">
+          {% if analysis.ats_score|default(0) >= 80 %}
+          <span class="text-green-600 font-medium flex items-center gap-1"><i data-lucide="check-circle-2"
+              class="w-4 h-4"></i> Excellent</span>
+          {% elif analysis.ats_score|default(0) >= 60 %}
+          <span class="text-yellow-600 font-medium flex items-center gap-1"><i data-lucide="alert-circle"
+              class="w-4 h-4"></i> Good</span>
+          {% else %}
+          <span class="text-red-600 font-medium flex items-center gap-1"><i data-lucide="x-circle" class="w-4 h-4"></i>
+            Needs Work</span>
+          {% endif %}
+        </div>
+        <p class="text-sm text-slate-500">Based on keyword matching & formatting.</p>
+      </div>
+
+      <!-- Overall Assessment -->
+      <div class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Overall Assessment</h2>
+        </div>
+
+        {% if analysis.overall_assessment %}
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex-1">
+          <p class="text-slate-600 leading-relaxed break-words">
+            {{ analysis.overall_assessment.one_line_summary }}
+          </p>
+        </div>
+        {% else %}
+        <div
+          class="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-xl border border-slate-100 text-center p-4">
+          <i data-lucide="lock" class="w-10 h-10 text-slate-400 mb-3"></i>
+          <p class="text-slate-500 italic text-sm">Assessment details are locked.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Recruiter Quick Scan -->
+      <div class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-purple-50 rounded-lg text-purple-600">
+            <i data-lucide="eye" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Recruiter's 7-Sec Scan</h2>
+        </div>
+        {% if analysis.recruiter_quick_scan %}
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex-1">
+          <p class="text-slate-600 italic leading-relaxed text-sm">
+            "{{ analysis.recruiter_quick_scan }}"
+          </p>
+        </div>
+        {% else %}
+        <div
+          class="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-xl border border-slate-100 text-center p-4">
+          <i data-lucide="lock" class="w-10 h-10 text-slate-400 mb-3"></i>
+          <p class="text-slate-500 italic text-sm">Unlock to see the recruiter's first impression.</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Payment CTA (Pinned if not paid) -->
+    {% if not is_paid %}
+    <div
+      class="mb-8 overflow-hidden rounded-2xl border-2 border-brand-200 bg-white shadow-xl relative {% if payment_status == 'pending' %}opacity-90{% else %}animate-pulse-slow{% endif %}">
+      <div class="absolute -right-20 -top-20 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl"></div>
+
+      <div class="p-8 flex flex-col lg:flex-row items-center gap-8 relative z-10">
+        <div class="flex-1">
+          {% if payment_status == 'pending' %}
+          <h3 class="text-2xl font-bold text-slate-900 mb-3 flex items-center gap-3">
+            <i data-lucide="clock" class="w-8 h-8 text-yellow-500"></i> Verification in Progress
+          </h3>
+          <p class="text-slate-600 mb-4">We've received your screenshot. Our system verifying the payment.
+            This usually takes 15 sec - 1 min. <b>Please refresh this page after 1 min if not auto updated</b> to see
+            your full report.</p>
+          <div class="flex items-center gap-2 text-brand-600 font-medium bg-brand-50 px-4 py-2 rounded-lg inline-block">
+            <div class="w-4 h-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+            Checking Payment Status...
+          </div>
+          {% else %}
+          <h3 class="text-2xl font-bold text-slate-900 mb-3 flex items-center gap-3">
+            <i data-lucide="unlock" class="w-8 h-8 text-brand-600"></i> Unlock Premium Analysis
+          </h3>
+          <p class="text-slate-600 mb-4">Complete the payment to see full grammar fixes, smart bullet rewrites, critical
+            red flags, and professional formatting tips.</p>
+
+          {% if error %}
+          <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-600 rounded-lg flex items-center gap-3 mb-6">
+            <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+            <span class="font-medium text-sm">{{ error }}</span>
+          </div>
+          {% endif %}
+
+          <!-- Mobile Only: Quick Pay Button -->
+          <div id="mobile-pay" class="hidden mb-6">
+            <div id="pay-initial">
+              <a href="upi://pay?pa=bennyeldho2@okicici&pn=ResumeAI&am=40&cu=INR&tn=Resume+Report+Unlock"
+                onclick="document.getElementById('pay-initial').classList.add('hidden'); document.getElementById('pay-after').classList.remove('hidden');"
+                class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex justify-center items-center gap-3">
+                <i data-lucide="smartphone" class="w-5 h-5"></i>
+                Pay ₹40 via UPI App
+              </a>
+              <p class="text-center text-xs text-slate-400 mt-2">Opens GPay, PhonePe, Paytm, etc.</p>
+            </div>
+
+            <div id="pay-after" class="hidden text-center scale-up">
+              <p class="text-brand-600 font-bold mb-3 flex items-center justify-center gap-2">
+                <i data-lucide="check-circle" class="w-5 h-5"></i> Payment Initiated?
+              </p>
+              <p class="text-sm text-slate-500 mb-4">Once you finish the payment in your UPI app, come back here and
+                upload the screenshot below.</p>
+              <button onclick="document.getElementById('screenshot-input').click()"
+                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2">
+                <i data-lucide="camera" class="w-5 h-5"></i> Upload Screenshot Now
+              </button>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if payment_status != 'pending' %}
+        <div class="flex flex-col sm:flex-row items-center gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+          <div id="desktop-qr" class="text-center">
+            <p class="text-xs text-slate-500 uppercase tracking-widest font-bold mb-3">Scan to Pay ₹40</p>
+            <img src="/templates/qrcode.png" alt="QR Code" class="w-32 h-32 mx-auto rounded-lg shadow-md mb-2 bg-white">
+            <p class="text-[10px] text-slate-400">Google Pay / PhonePe / UPI</p>
+          </div>
+
+          <form method="post" action="/unlock" enctype="multipart/form-data" class="flex flex-col gap-3 min-w-[240px]">
+            <input type="hidden" name="analysis_id" value="{{ analysis_id }}">
+
+            <div class="relative">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Upload Payment
+                Screenshot</label>
+              <div class="flex items-center justify-center w-full">
+                <label
+                  class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-colors">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i data-lucide="image" class="w-8 h-8 text-slate-400 mb-2"></i>
+                    <p class="text-xs text-slate-500 font-medium" id="file-chosen">Click to upload image</p>
+                  </div>
+                  <input type="file" name="screenshot" id="screenshot-input" class="hidden" accept="image/*" required
+                    onchange="document.getElementById('file-chosen').textContent = this.files[0].name">
+                </label>
+              </div>
+            </div>
+
+            <button type="submit"
+              class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-brand-500/20 flex justify-center items-center gap-3 group">
+              Submit for Verification
+              <i data-lucide="send" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script>
+      // Device detection
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        const mobilePay = document.getElementById('mobile-pay');
+        const desktopQr = document.getElementById('desktop-qr');
+        if (mobilePay) mobilePay.classList.remove('hidden');
+        if (desktopQr) desktopQr.classList.add('hidden');
+      }
+
+      // Auto-refresh if pending
+      if ("{{ payment_status }}" === "pending") {
+        setTimeout(() => {
+          window.location.reload();
+        }, 15000); // Check every 15 seconds
+      }
+    </script>
+    {% endif %}
+
+    <!-- Detailed Analysis Grid -->
+    <div class="grid grid-cols-1 gap-6">
+
+      <!-- Missing Skills -->
+      <div class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-red-400"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-red-50 rounded-lg text-red-500">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Missing / Weak Skills</h2>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          {% for item in analysis.missing_skills %}
+          <span
+            class="px-3 py-1.5 bg-red-50 text-red-700 text-sm font-medium rounded-md border border-red-100 flex items-center gap-2">
+            <i data-lucide="x" class="w-3 h-3"></i> {{ item }}
+          </span>
+          {% endfor %}
+          {% if not is_paid %}
+          <span class="px-3 py-1.5 bg-slate-100 text-slate-500 text-sm font-medium rounded-md border border-slate-200">
+            + More skills locked...
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Grammar Fixes -->
+      <div
+        class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden flex flex-col h-full">
+        <div class="absolute top-0 left-0 w-full h-1 bg-teal-400"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-teal-50 rounded-lg text-teal-600">
+            <i data-lucide="spell-check" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Grammar & Clarity</h2>
+        </div>
+
+        <div class="space-y-4">
+          {% if analysis.grammar_fixes %}
+          {% for item in analysis.grammar_fixes %}
+          {% set parts = item.split("→") %}
+          <div
+            class="group p-4 bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-brand-200 transition-colors">
+            <div class="flex flex-col gap-2">
+              <div class="text-slate-500 line-through text-sm decoration-red-400/50 decoration-2 break-words">
+                {{ parts[0].strip() }}
+              </div>
+              <div
+                class="text-brand-700 font-medium text-sm bg-brand-50 px-3 py-2 rounded-lg border border-brand-100 break-words flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4 text-brand-500"></i>
+                {{ parts[1].strip() if parts|length > 1 else parts[0].strip() }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          {% if not is_paid %}
+          <p class="text-center text-slate-400 text-sm italic py-2">Full fixes are hidden in free report.</p>
+          {% endif %}
+          {% else %}
+          <div class="p-6 bg-slate-50 rounded-xl border border-slate-100 text-center">
+            <i data-lucide="lock" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+            <p class="text-slate-500 text-sm italic">Grammar check results are locked.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Formatting Fixes -->
+      <div
+        class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden flex flex-col h-full">
+        <div class="absolute top-0 left-0 w-full h-1 bg-pink-400"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-pink-50 rounded-lg text-pink-600">
+            <i data-lucide="layout" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Formatting & Structure</h2>
+        </div>
+
+        {% if analysis.formatting_suggestions %}
+        <ul class="space-y-3">
+          {% for item in analysis.formatting_suggestions %}
+          <li class="flex items-start gap-3 text-slate-600">
+            <i data-lucide="check-circle" class="w-5 h-5 text-pink-500 mt-0.5 shrink-0"></i>
+            <span class="break-words text-sm">{{ item }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-8 bg-slate-50 rounded-xl border border-slate-100 text-center">
+          <i data-lucide="lock" class="w-8 h-8 text-slate-400 mx-auto mb-3"></i>
+          <p class="text-slate-500 italic">Formatting suggestions are locked.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <div
+        class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden flex flex-col h-full">
+        <div class="absolute top-0 left-0 w-full h-1 bg-orange-400"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-orange-50 rounded-lg text-orange-600">
+            <i data-lucide="flag" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Critical Red Flags</h2>
+        </div>
+
+        {% if analysis.critical_issues %}
+        <div class="flex flex-col gap-4">
+          {% for issue in analysis.critical_issues %}
+          <div class="flex gap-4 p-4 bg-orange-50/50 rounded-xl border border-orange-100">
+            <div class="min-w-[4px] bg-orange-400 rounded-full"></div>
+            <div>
+              <span class="text-xs font-bold text-orange-600 uppercase tracking-wide">{{ issue.severity }}</span>
+              <p class="text-slate-700 mt-1 break-words text-sm">{{ issue.issue }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-8 bg-slate-50 rounded-xl border border-slate-100 text-center">
+          <i data-lucide="lock" class="w-8 h-8 text-slate-400 mx-auto mb-3"></i>
+          <p class="text-slate-500 italic">Critical issues are hidden.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Improved Bullets -->
+      <div
+        class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden flex flex-col h-full">
+        <div class="absolute top-0 left-0 w-full h-1 bg-indigo-400"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Smart Bullet Rewrites</h2>
+        </div>
+
+        {% if analysis.improved_bullets %}
+        <div class="space-y-6">
+          {% for item in analysis.improved_bullets %}
+          {% set parts = item.split("→") %}
+          <div class="relative pl-6 border-l-2 border-indigo-100">
+            <div class="mb-2">
+              <p class="text-xs text-slate-400 font-semibold uppercase mb-1">Before</p>
+              <p class="text-slate-600 text-sm break-words">{{ parts[0].strip() }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-indigo-500 font-semibold uppercase mb-1">Improved</p>
+              <p class="text-slate-800 font-medium text-sm bg-indigo-50/50 p-2 rounded-lg break-words">
+                {{ parts[1].strip() if parts|length > 1 else parts[0].strip() }}
+              </p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-8 bg-slate-50 rounded-xl border border-slate-100 text-center">
+          <i data-lucide="lock" class="w-8 h-8 text-slate-400 mx-auto mb-3"></i>
+          <p class="text-slate-500 italic">Smart rewrites are locked.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Premium Tips -->
+      <div
+        class="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300 shadow-xl shadow-yellow-500/5 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-yellow-400"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-yellow-50 rounded-lg text-yellow-600">
+            <i data-lucide="star" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800">Standout Branding Tips</h2>
+        </div>
+
+        {% if analysis.premium_tips %}
+        <ul class="space-y-4">
+          {% for item in analysis.premium_tips %}
+          <li class="flex items-start gap-3 text-slate-600">
+            <i data-lucide="zap" class="w-5 h-5 text-yellow-500 mt-1 shrink-0"></i>
+            <span class="break-words text-sm">{{ item }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-8 bg-slate-50 rounded-xl border border-slate-100 text-center">
+          <i data-lucide="lock" class="w-8 h-8 text-slate-400 mx-auto mb-3"></i>
+          <p class="text-slate-500 italic">Premium standout tips are locked.</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <footer class="mt-20 border-t border-slate-200 pt-8 text-center text-slate-400 text-sm">
+      <p>&copy; 2026 ResumeAI Analyzer. All rights reserved.</p>
+    </footer>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Database
+app.db
+
+# Temporary files
+temp_resume.pdf
+*.log
+
+# Personal/Sample PDFs
+resume_eldhose.pdf
+resume-sample.pdf
+
+# IDEs
+.vscode/
+.idea/
