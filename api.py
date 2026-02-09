@@ -43,6 +43,11 @@ if missing_vars:
 
 app = FastAPI()
 
+# --- DATABASE INITIALIZATION ---
+from database import engine
+from models import Base
+Base.metadata.create_all(bind=engine)
+
 # Add Proxy Headers Middleware for Render/HTTPS support
 try:
     from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
