@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from resume_parser import extract_resume_text
 from ai_analyzer import analyze_resume
 from response_parser import extract_json, calculate_ats_score
+from payment_verifier import verify_payment_screenshot
 from database import get_db
 from models import Analysis, User
 
@@ -280,9 +281,13 @@ async def unlock(
         if not screenshot.content_type.startswith("image/"):
              raise Exception("Please upload an image file (PNG/JPG/etc.)")
         
-        # We don't save locally to avoid filling Render's disk
-        # We send it directly to Telegram
+        # --- AUTOMATIC VERIFICATION ---
+        expected_receiver = "bennyeldho2@okicici or bennyeldho2-1@oksbi"
+        expected_amount = 40.0
         
+        is_valid, v_message, v_details = verify_payment_screenshot(content, expected_receiver, expected_amount)
+        print(f"Auto-Verification Result: {is_valid} - {v_message}")
+
         # Detect app base URL for the approval link
         base_url = str(request.base_url)
         if "render.com" in base_url or request.headers.get("x-forwarded-proto") == "https":
@@ -290,16 +295,26 @@ async def unlock(
             
         approval_url = f"{base_url.rstrip('/')}/approve-payment/{analysis_id}/{ADMIN_SECRET_TOKEN}"
         
+        status_tag = "✅ AUTO-VERIFIED" if is_valid else "⚠️ MANUAL REVIEW"
+        
         message = (
+            f"{status_tag}\n"
             f"💰 *New Payment Submission*\n\n"
             f"👤 User: {user_session['name'] if user_session else 'Guest'}\n"
             f"📧 Email: {user_session['email'] if user_session else 'N/A'}\n"
-            f"🆔 Analysis ID: `{analysis_id}`\n\n"
-            f"🔗 [CLICK HERE TO APPROVE]({approval_url})"
+            f"🆔 Analysis ID: `{analysis_id}`\n"
+            f"📝 Detail: {v_message}\n\n"
+            f"🔍 *Extracted Details:*\n"
+            f"💵 Amount: {v_details.get('amount') if v_details else 'N/A'}\n"
+            f"📅 Date: {v_details.get('transaction_date') if v_details else 'N/A'}\n"
+            f"🕒 Time: {v_details.get('transaction_time') if v_details else 'N/A'}\n"
+            f"🆔 Txn ID: `{v_details.get('transaction_id') if v_details else 'N/A'}`\n\n"
+            f"🔗 [VIEW REPORT]({base_url.rstrip('/')}/result-page/{analysis_id})\n"
+            f"🔗 [MANUAL APPROVE]({approval_url})"
         )
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(
+            await client.post(
                 f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto",
                 data={
                     "chat_id": TELEGRAM_CHAT_ID,
@@ -309,11 +324,12 @@ async def unlock(
                 files={"photo": (screenshot.filename, content, screenshot.content_type)}
             )
             
-            if response.status_code != 200:
-                print(f"Telegram Error: {response.text}")
-                raise Exception("Failed to notify admin. Contact support.")
-
-        analysis_row.payment_status = "pending"
+        if is_valid:
+            analysis_row.is_paid = True
+            analysis_row.payment_status = "paid"
+        else:
+            analysis_row.payment_status = "pending"
+            
         db.commit()
 
     except Exception as e:
