@@ -15,22 +15,22 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
     current_time = datetime.now()
     
     prompt = f"""
-    Analyze this payment image. It is likely a "Shared Receipt" card from Google Pay.
+    Analyze this payment image. It could be a standard screen screenshot or a "Shared Receipt" card from any major Indian UPI app like Google Pay, Paytm, or PhonePe.
     
     Extract the following details in JSON format:
     - sender_upi: UPI ID or name of the person who paid
-    - receiver_upi: The UPI ID OR the "Banking Name" shown (e.g., "ELDHOSE BENNY")
+    - receiver_upi: The UPI ID OR the "Banking Name" shown. Look specifically for "ELDHOSE BENNY", "bennyeldho2@okicici", or "bennyeldho2-1@oksbi".
     - amount: The numeric amount paid (e.g., 40.00)
     - transaction_date: The date (Format: YYYY-MM-DD)
-    - transaction_time: The time (Format: HH:MM:SS, 24-hour. Convert 12h format like '2:16 pm' to 24h '14:16:00')
-    - transaction_id: Transaction ID / Ref number (if visible, otherwise null)
-    - is_suspicious: Boolean (false for this minimalist GPay receipt layout unless fonts look fake)
+    - transaction_time: The time (Format: HH:MM:SS, 24-hour. Convert 12h formats like '2:16 pm' or '11:30 AM' to 24h format)
+    - transaction_id: Transaction ID / Ref number / UTR number (extract wherever possible)
+    - is_suspicious: Boolean (false for standard app layouts unless fonts look fake or edited)
     - suspicion_reason: String
     
     Current System Time for Reference: {current_time.strftime('%Y-%m-%d %H:%M:%S')}
     
     STRICT RULES:
-    1. This specific black/white card layout with a blue checkmark is a standard GPay Shared Receipt. It is VALID.
+    1. Support layouts from Google Pay, Paytm, and PhonePe. Each has different "Shared Receipt" designs; all are VALID.
     2. If the actual UPI ID (e.g., @okicici) is missing, extract the "Banking Name" or "Paid to" name instead into the receiver_upi field.
     3. Return ONLY valid JSON.
     """
