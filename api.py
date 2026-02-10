@@ -295,6 +295,19 @@ async def unlock(
             
         approval_url = f"{base_url.rstrip('/')}/approve-payment/{analysis_id}/{ADMIN_SECRET_TOKEN}"
         
+        v_txn_id = v_details.get("transaction_id") if v_details else None
+        
+        # --- PREVENT DUPLICATE TRANSACTION IDs ---
+        if is_valid and v_txn_id:
+            duplicate_txn = db.query(Analysis).filter(
+                Analysis.payment_reference == v_txn_id,
+                Analysis.is_paid == True
+            ).first()
+            
+            if duplicate_txn:
+                is_valid = False
+                v_message = f"Duplicate Transaction ID: {v_txn_id}"
+
         status_tag = "✅ AUTO-VERIFIED" if is_valid else "⚠️ MANUAL REVIEW"
         
         message = (
@@ -308,7 +321,7 @@ async def unlock(
             f"💵 Amount: {v_details.get('amount') if v_details else 'N/A'}\n"
             f"📅 Date: {v_details.get('transaction_date') if v_details else 'N/A'}\n"
             f"🕒 Time: {v_details.get('transaction_time') if v_details else 'N/A'}\n"
-            f"🆔 Txn ID: `{v_details.get('transaction_id') if v_details else 'N/A'}`\n\n"
+            f"🆔 Txn ID: `{v_txn_id if v_txn_id else 'N/A'}`\n\n"
             f"🔗 [VIEW REPORT]({base_url.rstrip('/')}/result-page/{analysis_id})\n"
             f"🔗 [MANUAL APPROVE]({approval_url})"
         )
@@ -327,6 +340,7 @@ async def unlock(
         if is_valid:
             analysis_row.is_paid = True
             analysis_row.payment_status = "paid"
+            analysis_row.payment_reference = v_txn_id # Save the ID
             db.commit()
             return RedirectResponse(url=f"/result-page/{analysis_id}", status_code=303)
         else:

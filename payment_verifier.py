@@ -22,13 +22,16 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
     - transaction_date: The date of the transaction (Format: YYYY-MM-DD)
     - transaction_time: The time of the transaction (Format: HH:MM:SS, 24-hour)
     - transaction_id: Transaction ID or Reference number
+    - is_suspicious: Boolean (true if you see signs of editing, font mismatches, or UI inconsistencies)
+    - suspicion_reason: String (why do you think it is fake?)
     
     Current System Time for Reference: {current_time.strftime('%Y-%m-%d %H:%M:%S')}
     
     STRICT RULES:
     1. If you cannot find a piece of information, return null for that field.
-    2. Return ONLY valid JSON.
-    3. Be extremely precise with the amount and UPI IDs.
+    2. Look closely for "Photoshopped" elements: mismatched fonts, blurred regions around text, or irregular colors.
+    3. Return ONLY valid JSON.
+    4. Be extremely precise with the amount and UPI IDs.
     """
 
     try:
@@ -48,6 +51,11 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
         print(f"Extracted details: {details}")
         
         # --- VERIFICATION LOGIC ---
+
+        # 0. Check for Tampering/Suspicion
+        if details.get("is_suspicious") is True:
+            reason = details.get("suspicion_reason", "Unknown inconsistency detected.")
+            return False, f"Screenshot looks suspicious: {reason}", details
         
         # 1. Check Amount
         extracted_amount = details.get("amount")
