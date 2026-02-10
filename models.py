@@ -35,6 +35,7 @@ class Analysis(Base):
 
     payment_reference = Column(String, nullable=True) # Will store Txn ID if entered
     payment_screenshot = Column(String, nullable=True) # Path to saved screenshot
+    screenshot_hash = Column(String, nullable=True, index=True) # SHA256 of screenshot
     payment_status = Column(String, default="unpaid") # unpaid, pending, paid
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

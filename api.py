@@ -281,6 +281,16 @@ async def unlock(
         if not screenshot.content_type.startswith("image/"):
              raise Exception("Please upload an image file (PNG/JPG/etc.)")
         
+        # --- PREVENT REUSE OF SAME IMAGE ---
+        screenshot_hash = hashlib.sha256(content).hexdigest()
+        duplicate_img = db.query(Analysis).filter(
+            Analysis.screenshot_hash == screenshot_hash,
+            Analysis.is_paid == True
+        ).first()
+        
+        if duplicate_img:
+             raise Exception("This screenshot has already been used to unlock an analysis. Please use a fresh payment receipt.")
+        
         # --- AUTOMATIC VERIFICATION ---
         expected_receiver = "bennyeldho2@okicici, bennyeldho2-1@oksbi, or bennyeldho2@oksbi"
         expected_amount = 40.0
@@ -297,17 +307,22 @@ async def unlock(
         
         v_txn_id = v_details.get("transaction_id") if v_details else None
         
+        # Always store the extracted transaction ID to the row (it might be overwritten on retry)
+        if v_txn_id:
+            analysis_row.payment_reference = v_txn_id
+
         # --- PREVENT DUPLICATE TRANSACTION IDs ---
-        # Only check if a Transaction ID was found. Minimalist receipts might not have one.
-        if is_valid and v_txn_id:
+        # We check if this Txn ID has already been used in ANY OTHER analysis that is already paid.
+        if v_txn_id:
             duplicate_txn = db.query(Analysis).filter(
                 Analysis.payment_reference == v_txn_id,
-                Analysis.is_paid == True
+                Analysis.is_paid == True,
+                Analysis.id != analysis_id # Don't block if it's just a retry on the same analysis
             ).first()
             
             if duplicate_txn:
                 is_valid = False
-                v_message = f"Duplicate Transaction ID: {v_txn_id}"
+                v_message = f"Duplicate Transaction ID: {v_txn_id}. This transaction has already been used to unlock another report."
         
         # If Txn ID is missing, we allow the payment but mark it differently in Telegram 
         # so you know it needs a quick glance to prevent double-use manually.
@@ -346,34 +361,20 @@ async def unlock(
         if is_valid:
             analysis_row.is_paid = True
             analysis_row.payment_status = "paid"
-            analysis_row.payment_reference = v_txn_id # Save the ID
+            analysis_row.payment_reference = v_txn_id
+            analysis_row.screenshot_hash = screenshot_hash
             db.commit()
             return RedirectResponse(url=f"/result-page/{analysis_id}", status_code=303)
         else:
-            # Auto-verification failed.
-            # We do NOT set it to pending in DB so the user can try again immediately.
-            # But we still send it to Telegram for manual review as a backup.
+            # Set status to pending so the frontend auto-refresher kicks in
+            analysis_row.payment_status = "pending"
+            analysis_row.screenshot_hash = screenshot_hash 
+            if v_txn_id:
+                analysis_row.payment_reference = v_txn_id
             db.commit() 
             
-            analysis_raw = json.loads(analysis_row.analysis_json)
-            analysis = adapt_for_ui(analysis_raw)
-            analysis = ensure_min_items(analysis)
-            analysis = apply_paywall(analysis, False)
-            
-            error_msg = f"Auto-Verification Failed: {v_message}"
-            
-            return templates.TemplateResponse(
-                "result.html",
-                {
-                    "request": request,
-                    "user": user_session,
-                    "analysis": analysis,
-                    "analysis_id": analysis_id,
-                    "is_paid": False,
-                    "payment_status": analysis_row.payment_status, # Remains 'unpaid'
-                    "error": error_msg
-                }
-            )
+            # Instead of returning template, redirect back to result page with error
+            return RedirectResponse(url=f"/result-page/{analysis_id}?error={v_message}", status_code=303)
     except Exception as e:
         analysis_raw = json.loads(analysis_row.analysis_json)
         analysis = adapt_for_ui(analysis_raw)
@@ -403,11 +404,17 @@ async def view_result_by_id(request: Request, analysis_id: str, db: Session = De
         return RedirectResponse(url="/")
         
     analysis_raw = json.loads(analysis_row.analysis_json)
+    analysis_id = analysis_row.id
+    is_paid = analysis_row.is_paid
+    payment_status = analysis_row.payment_status
+    
+    # Check for error in query params
+    error = request.query_params.get("error")
+
     analysis = adapt_for_ui(analysis_raw)
     analysis = ensure_min_items(analysis)
     
     # 🔒 Apply Paywall
-    is_paid = analysis_row.is_paid
     analysis = apply_paywall(analysis, is_paid)
 
     return templates.TemplateResponse(
@@ -418,7 +425,8 @@ async def view_result_by_id(request: Request, analysis_id: str, db: Session = De
             "analysis": analysis,
             "analysis_id": analysis_id,
             "is_paid": is_paid,
-            "payment_status": analysis_row.payment_status
+            "payment_status": payment_status,
+            "error": error
         }
     )
 
@@ -435,6 +443,7 @@ async def approve_payment(analysis_id: str, token: str, db: Session = Depends(ge
     analysis_row.payment_status = "paid"
     db.commit()
     
+    print(f"✅ MANUALLY APPROVED analysis {analysis_id}")
     return Response(content="✅ Payment approved! User can now refresh their page to see full results.", media_type="text/plain")
 
 def adapt_for_ui(raw: dict):
