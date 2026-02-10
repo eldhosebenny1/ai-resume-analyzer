@@ -298,6 +298,7 @@ async def unlock(
         v_txn_id = v_details.get("transaction_id") if v_details else None
         
         # --- PREVENT DUPLICATE TRANSACTION IDs ---
+        # Only check if a Transaction ID was found. Minimalist receipts might not have one.
         if is_valid and v_txn_id:
             duplicate_txn = db.query(Analysis).filter(
                 Analysis.payment_reference == v_txn_id,
@@ -307,6 +308,11 @@ async def unlock(
             if duplicate_txn:
                 is_valid = False
                 v_message = f"Duplicate Transaction ID: {v_txn_id}"
+        
+        # If Txn ID is missing, we allow the payment but mark it differently in Telegram 
+        # so you know it needs a quick glance to prevent double-use manually.
+        elif is_valid and not v_txn_id:
+            v_message += " (Note: No Txn ID found in this receipt layout)"
 
         status_tag = "✅ AUTO-VERIFIED" if is_valid else "⚠️ MANUAL REVIEW"
         

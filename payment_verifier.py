@@ -15,25 +15,24 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
     current_time = datetime.now()
     
     prompt = f"""
-    Analyze this payment image (could be a standard screenshot or a "Shared Receipt" image from GPay/Paytm/PhonePe).
+    Analyze this payment image. It is likely a "Shared Receipt" card from Google Pay.
+    
     Extract the following details in JSON format:
     - sender_upi: UPI ID or name of the person who paid
-    - receiver_upi: UPI ID of the person who received the money (look for "bennyeldho2@okicici" or "bennyeldho2-1@oksbi")
-    - amount: The numeric amount paid
-    - transaction_date: The date of the transaction (Format: YYYY-MM-DD)
-    - transaction_time: The time of the transaction (Format: HH:MM:SS, 24-hour. If time is missing but date is present, guess contextually or return null)
-    - transaction_id: Transaction ID or Reference number
-    - is_suspicious: Boolean (true if you see obvious signs of Photoshop: mismatched fonts, blurred text boxes, or irregular background artifacts)
-    - suspicion_reason: String (why do you think it is fake?)
+    - receiver_upi: The UPI ID OR the "Banking Name" shown (e.g., "ELDHOSE BENNY")
+    - amount: The numeric amount paid (e.g., 40.00)
+    - transaction_date: The date (Format: YYYY-MM-DD)
+    - transaction_time: The time (Format: HH:MM:SS, 24-hour. Convert 12h format like '2:16 pm' to 24h '14:16:00')
+    - transaction_id: Transaction ID / Ref number (if visible, otherwise null)
+    - is_suspicious: Boolean (false for this minimalist GPay receipt layout unless fonts look fake)
+    - suspicion_reason: String
     
     Current System Time for Reference: {current_time.strftime('%Y-%m-%d %H:%M:%S')}
     
     STRICT RULES:
-    1. If you cannot find a piece of information, return null for that field.
-    2. Shared receipts (nicely formatted receipt cards) are VALID. Do not mark them as suspicious just because they don't look like a standard phone screen.
-    3. Look closely for "Photoshopped" elements: mismatched fonts or blurred regions specifically around the amount/date.
-    4. Return ONLY valid JSON.
-    5. Be extremely precise with the amount and UPI IDs.
+    1. This specific black/white card layout with a blue checkmark is a standard GPay Shared Receipt. It is VALID.
+    2. If the actual UPI ID (e.g., @okicici) is missing, extract the "Banking Name" or "Paid to" name instead into the receiver_upi field.
+    3. Return ONLY valid JSON.
     """
 
     try:
