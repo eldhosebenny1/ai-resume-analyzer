@@ -340,7 +340,7 @@ async def unlock(
             analysis = ensure_min_items(analysis)
             analysis = apply_paywall(analysis, False)
             
-            error_msg = f"Auto-Verification Failed: the screenshot is too old."
+            error_msg = f"Auto-Verification Failed: {v_message}"
             
             return templates.TemplateResponse(
                 "result.html",

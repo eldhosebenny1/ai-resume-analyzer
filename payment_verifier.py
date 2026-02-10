@@ -98,14 +98,16 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
             
             server_now = datetime.now()
             
-            # Try both direct diff and UST-to-IST adjustment (IST is UTC + 5:30)
+            # diff_seconds is (Server Time - Transaction Time)
+            # Since Render is UTC and Txn is IST, Server is 5.5h BEHIND.
+            # So diff_seconds will be around -19800 (-330 mins).
             diff_seconds = (server_now - txn_dt).total_seconds()
             diff_minutes = abs(diff_seconds) / 60
             
-            # If server is UTC and txn is IST, diff will be ~330 mins
-            # Let's adjust if it's around 330 mins
-            if 310 < diff_seconds < 350: # Around 5.5 hours
-                 diff_minutes = abs(diff_seconds - 330) / 60
+            # If the gap is around 5.5 hours (330 mins), it's likely a UTC vs IST mismatch.
+            # We check if the gap is between 310 and 350 minutes.
+            if 310 < diff_minutes < 350:
+                 diff_minutes = abs(diff_minutes - 330) # Adjust for the 5.5h offset
             
             if diff_minutes > 20: # Giving 20 mins buffer
                 return False, f"Transaction time is too old. Found {extracted_time}, Gap: {diff_minutes:.1f} mins.", details
