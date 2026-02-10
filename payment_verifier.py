@@ -27,7 +27,8 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
     - is_suspicious: Boolean (false for standard app layouts unless fonts look fake or edited)
     - suspicion_reason: String
     
-    Current System Time for Reference: {current_time.strftime('%Y-%m-%d %H:%M:%S')}
+    Current System Time for Reference (UTC): {current_time.strftime('%Y-%m-%d %H:%M:%S')}
+    Note: India (IST) is 5.5 hours ahead of UTC. Screenshots from India will have times that appear to be in the future relative to this UTC time. This is NORMAL and NOT suspicious.
     
     STRICT RULES:
     1. Support layouts from Google Pay, Paytm, and PhonePe. Each has different "Shared Receipt" designs; all are VALID.
