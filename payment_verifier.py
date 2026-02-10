@@ -15,23 +15,25 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
     current_time = datetime.now()
     
     prompt = f"""
-    Analyze this payment screenshot (Google Pay, Paytm, PhonePe, etc.) and extract the following details in JSON format:
+    Analyze this payment image (could be a standard screenshot or a "Shared Receipt" image from GPay/Paytm/PhonePe).
+    Extract the following details in JSON format:
     - sender_upi: UPI ID or name of the person who paid
-    - receiver_upi: UPI ID of the person who received the money
+    - receiver_upi: UPI ID of the person who received the money (look for "bennyeldho2@okicici" or "bennyeldho2-1@oksbi")
     - amount: The numeric amount paid
     - transaction_date: The date of the transaction (Format: YYYY-MM-DD)
-    - transaction_time: The time of the transaction (Format: HH:MM:SS, 24-hour)
+    - transaction_time: The time of the transaction (Format: HH:MM:SS, 24-hour. If time is missing but date is present, guess contextually or return null)
     - transaction_id: Transaction ID or Reference number
-    - is_suspicious: Boolean (true if you see signs of editing, font mismatches, or UI inconsistencies)
+    - is_suspicious: Boolean (true if you see obvious signs of Photoshop: mismatched fonts, blurred text boxes, or irregular background artifacts)
     - suspicion_reason: String (why do you think it is fake?)
     
     Current System Time for Reference: {current_time.strftime('%Y-%m-%d %H:%M:%S')}
     
     STRICT RULES:
     1. If you cannot find a piece of information, return null for that field.
-    2. Look closely for "Photoshopped" elements: mismatched fonts, blurred regions around text, or irregular colors.
-    3. Return ONLY valid JSON.
-    4. Be extremely precise with the amount and UPI IDs.
+    2. Shared receipts (nicely formatted receipt cards) are VALID. Do not mark them as suspicious just because they don't look like a standard phone screen.
+    3. Look closely for "Photoshopped" elements: mismatched fonts or blurred regions specifically around the amount/date.
+    4. Return ONLY valid JSON.
+    5. Be extremely precise with the amount and UPI IDs.
     """
 
     try:
@@ -92,40 +94,37 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
         extracted_date = details.get("transaction_date") # YYYY-MM-DD
         extracted_time = details.get("transaction_time") # HH:MM:SS
         
-        if not extracted_date or not extracted_time:
-            return False, "Could not find date or time in screenshot.", details
+        if not extracted_date:
+            return False, "Could not find transaction date in the image.", details
             
-        try:
-            txn_dt_str = f"{extracted_date} {extracted_time}"
-            txn_dt = datetime.strptime(txn_dt_str, "%Y-%m-%d %H:%M:%S")
-            
-            # Calculate diff in minutes
-            # We assume the screenshot time is in the same timezone as the user (IST usually)
-            # For simplicity, if the date matches today and time is within 20 mins, we allow it.
-            # This accounts for server time vs user time differences up to 5.5 hours if server is UTC.
-            
-            server_now = datetime.now()
-            
-            # diff_seconds is (Server Time - Transaction Time)
-            # Since Render is UTC and Txn is IST, Server is 5.5h BEHIND.
-            # So diff_seconds will be around -19800 (-330 mins).
-            diff_seconds = (server_now - txn_dt).total_seconds()
-            diff_minutes = abs(diff_seconds) / 60
-            
-            # If the gap is around 5.5 hours (330 mins), it's likely a UTC vs IST mismatch.
-            # We check if the gap is between 310 and 350 minutes.
-            if 310 < diff_minutes < 350:
-                 diff_minutes = abs(diff_minutes - 330) # Adjust for the 5.5h offset
-            
-            if diff_minutes > 20: # Giving 20 mins buffer
-                return False, f"Transaction time is too old. Found {extracted_time}, Gap: {diff_minutes:.1f} mins.", details
+        server_now = datetime.now()
+        today_date = server_now.strftime("%Y-%m-%d")
+
+        # If we have both date and time, we check the window
+        if extracted_date and extracted_time:
+            try:
+                txn_dt_str = f"{extracted_date} {extracted_time}"
+                txn_dt = datetime.strptime(txn_dt_str, "%Y-%m-%d %H:%M:%S")
                 
-        except Exception as e:
-            print(f"Time parsing error: {e}")
-            # Date fallback
-            today_date = server_now.strftime("%Y-%m-%d")
+                diff_seconds = (server_now - txn_dt).total_seconds()
+                diff_minutes = abs(diff_seconds) / 60
+                
+                # Timezone adjustment (UTC vs IST)
+                if 310 < diff_minutes < 350:
+                     diff_minutes = abs(diff_minutes - 330)
+                
+                if diff_minutes > 20: 
+                    return False, f"the screenshot is too old.", details
+                    
+            except Exception as e:
+                print(f"Time parsing error: {e}")
+                if extracted_date != today_date:
+                    return False, f"the date in the screenshot does not match today's date.", details
+        else:
+            # If time is missing (common in some shared receipts), 
+            # we just check if the date is today.
             if extracted_date != today_date:
-                return False, f"Date mismatch. Today is {today_date}, found {extracted_date}.", details
+                return False, f"the date in the screenshot does not match today's date.", details
 
         return True, "Payment verified successfully!", details
 
