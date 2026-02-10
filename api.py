@@ -282,7 +282,7 @@ async def unlock(
              raise Exception("Please upload an image file (PNG/JPG/etc.)")
         
         # --- AUTOMATIC VERIFICATION ---
-        expected_receiver = "bennyeldho2@okicici or bennyeldho2-1@oksbi"
+        expected_receiver = "bennyeldho2@okicici, bennyeldho2-1@oksbi, or bennyeldho2@oksbi"
         expected_amount = 40.0
         
         is_valid, v_message, v_details = verify_payment_screenshot(content, expected_receiver, expected_amount)

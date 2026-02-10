@@ -19,7 +19,7 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
     
     Extract the following details in JSON format:
     - sender_upi: UPI ID or name of the person who paid
-    - receiver_upi: The UPI ID OR the "Banking Name" shown. Look specifically for "ELDHOSE BENNY", "bennyeldho2@okicici", or "bennyeldho2-1@oksbi".
+    - receiver_upi: The UPI ID OR the "Banking Name" shown. Look specifically for "ELDHOSE BENNY", "bennyeldho2@okicici", "bennyeldho2-1@oksbi", or "bennyeldho2@oksbi".
     - amount: The numeric amount paid (e.g., 40.00)
     - transaction_date: The date (Format: YYYY-MM-DD)
     - transaction_time: The time (Format: HH:MM:SS, 24-hour. Convert 12h formats like '2:16 pm' or '11:30 AM' to 24h format)
@@ -81,7 +81,7 @@ def verify_payment_screenshot(image_content: bytes, expected_receiver_upi: str, 
             pass
         else:
             # Check if any of the expected receivers or common name parts are in the extracted text
-            expected_receivers = ["bennyeldho2@okicici", "bennyeldho2-1@oksbi"]
+            expected_receivers = ["bennyeldho2@okicici", "bennyeldho2-1@oksbi", "bennyeldho2@oksbi"]
             expected_parts = ["benny", "eldho", "okicici", "oksbi"]
             
             found_match = any(rec.lower() in extracted_receiver.lower() for rec in expected_receivers) or \
