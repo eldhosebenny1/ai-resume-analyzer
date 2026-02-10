@@ -327,14 +327,37 @@ async def unlock(
         if is_valid:
             analysis_row.is_paid = True
             analysis_row.payment_status = "paid"
+            db.commit()
+            return RedirectResponse(url=f"/result-page/{analysis_id}", status_code=303)
         else:
-            analysis_row.payment_status = "pending"
+            # Auto-verification failed.
+            # We do NOT set it to pending in DB so the user can try again immediately.
+            # But we still send it to Telegram for manual review as a backup.
+            db.commit() 
             
-        db.commit()
-
+            analysis_raw = json.loads(analysis_row.analysis_json)
+            analysis = adapt_for_ui(analysis_raw)
+            analysis = ensure_min_items(analysis)
+            analysis = apply_paywall(analysis, False)
+            
+            error_msg = f"Auto-Verification Failed: the screenshot is too old."
+            
+            return templates.TemplateResponse(
+                "result.html",
+                {
+                    "request": request,
+                    "user": user_session,
+                    "analysis": analysis,
+                    "analysis_id": analysis_id,
+                    "is_paid": False,
+                    "payment_status": analysis_row.payment_status, # Remains 'unpaid'
+                    "error": error_msg
+                }
+            )
     except Exception as e:
         analysis_raw = json.loads(analysis_row.analysis_json)
         analysis = adapt_for_ui(analysis_raw)
+        analysis = ensure_min_items(analysis)
         analysis = apply_paywall(analysis, False) # Force paywall on error
         return templates.TemplateResponse(
             "result.html",
