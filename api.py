@@ -134,6 +134,13 @@ async def logout(request: Request):
     request.session.pop('user', None)
     return RedirectResponse(url='/')
 
+# --- GOOGLE VERIFICATION ---
+from fastapi.responses import FileResponse
+
+@app.get("/google69e1d64928695952.html")
+async def google_verification():
+    return FileResponse("google69e1d64928695952.html")
+
 # --- MAIN ROUTES ---
 @app.get("/")
 def home(request: Request):
