@@ -141,6 +141,10 @@ from fastapi.responses import FileResponse
 async def google_verification():
     return FileResponse("google69e1d64928695952.html")
 
+@app.get("/sitemap.xml")
+async def sitemap():
+    return FileResponse("templates/sitemap.xml")
+
 # --- MAIN ROUTES ---
 @app.get("/")
 def home(request: Request):
